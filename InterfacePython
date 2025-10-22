@@ -1,0 +1,177 @@
+from tkinter import messagebox
+import csv
+
+# === Função: lançar notas ===
+def lancar_notas():
+    nome = entry_nome.get().strip()
+    matricula = entry_matricula.get().strip()
+    nota1 = entry_nota1.get().strip()
+    nota2 = entry_nota2.get().strip()
+
+    if nome == "" or matricula == "" or nota1 == "" or nota2 == "":
+        messagebox.showwarning("Aviso", "Preencha todos os campos!")
+        return
+
+    f = open("C:\\Users\\Pichau\\OneDrive\\Documentos\\C\\students.csv", "r", encoding="utf-8")
+    conteudo = f.read()
+    f.close()
+
+    if f"{nome},{matricula}" not in conteudo:
+        messagebox.showerror("Erro", "Aluno não encontrado!")
+        return
+
+    n1 = float(nota1)
+    n2 = float(nota2)
+    media = (n1 + n2) / 2
+
+    if media >= 7:
+        situacao = "Aprovado"
+    elif media >= 4:
+        situacao = "Exame"
+    else:
+        situacao = "Reprovado"
+
+    # Arquivo individual
+    nome_arquivo = f"C:\\Users\\Pichau\\OneDrive\\Documentos\\C\\result_{matricula}.csv"
+    f = open(nome_arquivo, "w", encoding="utf-8")
+    f.write("Nome,Matricula,Nota1,Nota2,Media,Situacao\n")
+    f.write(f"{nome},{matricula},{n1:.2f},{n2:.2f},{media:.2f},{situacao}\n")
+    f.close()
+
+    # Arquivo geral de resultados
+    f2 = open("C:\\Users\\Pichau\\OneDrive\\Documentos\\C\\results.csv", "a", encoding="utf-8")
+    f2.write(f"{nome},{matricula},{n1:.2f},{n2:.2f},{media:.2f},{situacao}\n")
+    f2.close()
+
+    messagebox.showinfo("Sucesso", f"Notas salvas no arquivo '{nome_arquivo}'.")
+
+    entry_nome.delete(0, tk.END)
+    entry_matricula.delete(0, tk.END)
+    entry_nota1.delete(0, tk.END)
+    entry_nota2.delete(0, tk.END)
+
+
+def read_usuarios():
+    f = open("C:\\Users\\Pichau\\OneDrive\\Documentos\\C\\students.csv", "r", encoding="utf-8")
+    doc = f.read()
+    f.close()
+    resultado.config(text="=== Usuários Cadastrados ===\n" + doc)
+
+
+def read_notas():
+    f = open("C:\\Users\\Pichau\\OneDrive\\Documentos\\C\\results.csv", "r", encoding="utf-8")
+    doc = f.read()
+    f.close()
+    resultado.config(text="=== Resultados dos Alunos ===\n" + doc)
+
+def pesquisar_aluno():
+    matricula = entry_pesquisa.get().strip()
+    nome_arquivo = f"C:\\Users\\Pichau\\OneDrive\\Documentos\\C\\result_{matricula}.csv"
+
+    if matricula == "":
+        messagebox.showwarning("Aviso", "Digite uma matrícula para pesquisar!")
+        return
+
+    f = open(nome_arquivo, "r", encoding="utf-8")
+    conteudo = f.read()
+    f.close()
+
+    if matricula in conteudo:
+        resultado.config(text=f"=== Resultado do Aluno {matricula} ===\n{conteudo}")
+    else:
+        messagebox.showerror("Erro", "Aluno não encontrado!")
+
+
+def consultar_cadastro():
+    matricula = entry_consulta.get().strip()
+    f = open("C:\\Users\\Pichau\\OneDrive\\Documentos\\C\\students.csv", "r", encoding="utf-8")
+    linhas = f.readlines()
+    f.close()
+
+    encontrado = False
+    for linha in linhas:
+        partes = linha.strip().split(",")
+        if len(partes) >= 2 and partes[1] == matricula:
+            resultado.config(text=f"=== Cadastro Encontrado ===\n{linha}")
+            encontrado = True
+            break
+
+    if not encontrado:
+        messagebox.showerror("Erro", "Aluno não encontrado!")
+
+
+def excluir_usuario():
+    matricula = entry_excluir.get().strip()
+    if matricula == "":
+        messagebox.showwarning("Aviso", "Digite uma matrícula para excluir!")
+        return
+
+    f = open("C:\\Users\\Pichau\\OneDrive\\Documentos\\C\\students.csv", "r", encoding="utf-8")
+    linhas = f.readlines()
+    f.close()
+
+    novo_conteudo = []
+    encontrado = False
+
+    for linha in linhas:
+        partes = linha.strip().split(",")
+        if len(partes) >= 2 and partes[1] == matricula:
+            encontrado = True
+        else:
+            novo_conteudo.append(linha)
+
+    f = open("C:\\Users\\Pichau\\OneDrive\\Documentos\\C\\students.csv", "w", encoding="utf-8")
+    f.writelines(novo_conteudo)
+    f.close()
+
+    if encontrado:
+        messagebox.showinfo("Sucesso", f"Aluno com matrícula {matricula} foi excluído!")
+    else:
+        messagebox.showerror("Erro", "Aluno não encontrado!")
+
+    entry_excluir.delete(0, tk.END)
+
+
+janela = tk.Tk()
+janela.title("Sistema Acadêmico")
+janela.geometry("800x800")
+
+tk.Label(janela, text="Nome do Aluno:").pack()
+entry_nome = tk.Entry(janela, width=40)
+entry_nome.pack()
+
+tk.Label(janela, text="Matrícula:").pack()
+entry_matricula = tk.Entry(janela, width=40)
+entry_matricula.pack()
+
+tk.Label(janela, text="Nota 1:").pack()
+entry_nota1 = tk.Entry(janela, width=40)
+entry_nota1.pack()
+
+tk.Label(janela, text="Nota 2:").pack()
+entry_nota2 = tk.Entry(janela, width=40)
+entry_nota2.pack()
+
+tk.Button(janela, text="Lançar Notas", command=lancar_notas).pack(pady=10)
+tk.Button(janela, text="Exibir Usuários Cadastrados", command=read_usuarios).pack(pady=5)
+tk.Button(janela, text="Exibir Notas dos Alunos", command=read_notas).pack(pady=5)
+
+tk.Label(janela, text="\nPesquisar aluno pela matrícula:").pack()
+entry_pesquisa = tk.Entry(janela, width=40)
+entry_pesquisa.pack()
+tk.Button(janela, text="Pesquisar", command=pesquisar_aluno).pack(pady=5)
+
+resultado = tk.Label(janela, text="", justify="left", font=("Courier New", 10))
+resultado.pack(pady=20)
+
+tk.Label(janela, text="\nConsultar dados cadastrais:").pack()
+entry_consulta = tk.Entry(janela, width=40)
+entry_consulta.pack()
+tk.Button(janela, text="Consultar Cadastro", command=consultar_cadastro).pack(pady=5)
+
+tk.Label(janela, text="\nExcluir aluno pela matrícula:").pack()
+entry_excluir = tk.Entry(janela, width=40)
+entry_excluir.pack()
+tk.Button(janela, text="Excluir Usuário", command=excluir_usuario).pack(pady=5)
+
+janela.mainloop()
